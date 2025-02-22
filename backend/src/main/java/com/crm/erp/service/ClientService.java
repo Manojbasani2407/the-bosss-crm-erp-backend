@@ -2,7 +2,9 @@ package com.crm.erp.service;
 
 import com.crm.erp.exception.ResourceNotFoundException;
 import com.crm.erp.model.Client;
+import com.crm.erp.model.Invoice;
 import com.crm.erp.repository.ClientRepository;
+import com.crm.erp.repository.InvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +22,7 @@ public class ClientService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientService.class);
     private final ClientRepository clientRepository;
+    private final InvoiceRepository invoiceRepository;
 
     /**
      * Retrieve all clients.
@@ -41,6 +44,18 @@ public class ClientService {
         LOGGER.info("Fetching client with ID: {}", id);
         return clientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Client not found with ID: " + id));
+    }
+
+    /**
+     * Retrieve all invoices for a given client.
+     *
+     * @param clientId Client ID.
+     * @return List of invoices for the client.
+     */
+    public List<Invoice> getInvoicesByClientId(Long clientId) {
+        LOGGER.info("Fetching invoices for client ID: {}", clientId);
+        Client client = getClientById(clientId); // Ensure client exists
+        return invoiceRepository.findByClient(client);
     }
 
     /**

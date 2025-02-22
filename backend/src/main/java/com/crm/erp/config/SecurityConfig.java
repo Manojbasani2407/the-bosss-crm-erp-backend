@@ -33,7 +33,7 @@ public class SecurityConfig {
             "/api/auth/login",
             "/api/users/register",
             "/api/public/**",
-            "/api/projects/**",  // ✅ Allow access to project-related actions
+            "/api/projects/**",
             "/api/clients/**",
             "/api/invoices/**"
     };
@@ -54,28 +54,29 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .cors(cors -> cors.configurationSource(corsConfigSource())) // ✅ CORS Configuration
-                .csrf(csrf -> csrf.disable()) // ✅ Disable CSRF for REST APIs
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(this::handleAuthException)) // ✅ Custom Exception Handling
-                .authorizeHttpRequests(auth -> setupAuthorizationRules(auth)) // ✅ Define Authorization Rules
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // ✅ Stateless Sessions
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class) // ✅ Add JWT Filter
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS Configuration
+                .csrf(csrf -> csrf.disable()) // Disable CSRF for REST APIs
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(this::handleAuthException)) // Custom Exception Handling
+                .authorizeHttpRequests(this::configureAuthorizationRules) // Define Authorization Rules
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless Sessions
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class) // Add JWT Filter
                 .build();
     }
 
     /**
      * Defines authorization rules for API endpoints.
      */
-    private void setupAuthorizationRules(org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
-        auth
-                .requestMatchers(PUBLIC_ENDPOINTS).permitAll() // ✅ Allow all public APIs
-                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN") // ✅ Restrict admin routes
-                .requestMatchers("/api/projects/create").permitAll() // ✅ Allow project creation
-                .requestMatchers("/api/projects/{id}").permitAll() // ✅ Allow fetching project details
-                .requestMatchers("/api/projects/update/{id}").permitAll() // ✅ Allow project updates
-                .requestMatchers("/api/projects/delete/{id}").permitAll() // ✅ Allow project deletion
-                .requestMatchers("/api/projects/restore/{id}").permitAll() // ✅ Allow restoring projects
-                .anyRequest().authenticated(); // ✅ Secure all other endpoints
+    private void configureAuthorizationRules(org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
+        auth.requestMatchers(PUBLIC_ENDPOINTS).permitAll() // Allow public APIs
+                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN") // Restrict admin routes
+                .requestMatchers("/api/projects/create",
+                        "/api/projects/{id}",
+                        "/api/projects/update/{id}",
+                        "/api/projects/delete/{id}",
+                        "/api/clients/**",
+                        "/api/invoices/**",
+                        "/api/projects/restore/{id}").permitAll() // Allow project actions
+                .anyRequest().authenticated(); // Secure all other endpoints
     }
 
     /**
@@ -103,13 +104,13 @@ public class SecurityConfig {
      */
     @Bean
     public CorsFilter corsFilter() {
-        return new CorsFilter(corsConfigSource());
+        return new CorsFilter(corsConfigurationSource());
     }
 
-    private UrlBasedCorsConfigurationSource corsConfigSource() {
+    private UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(env.getProperty("cors.allowed-origins", "http://localhost:3000").split(",")));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // ✅ Ensure all HTTP methods are included
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin"));
         config.setAllowCredentials(true);
 

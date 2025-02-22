@@ -1,6 +1,9 @@
 package com.crm.erp.controller;
 
+import com.crm.erp.dto.ProjectDTO;
+import com.crm.erp.model.Client;
 import com.crm.erp.model.Project;
+import com.crm.erp.service.ClientService;
 import com.crm.erp.service.ProjectService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +22,11 @@ public class ProjectController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectController.class);
     private final ProjectService projectService;
+    private final ClientService clientService;
 
-    public ProjectController(ProjectService projectService) {
+    public ProjectController(ProjectService projectService, ClientService clientService) {
         this.projectService = projectService;
+        this.clientService = clientService;
     }
 
     /**
@@ -48,19 +53,47 @@ public class ProjectController {
     }
 
     /**
-     * Create a new project. Automatically sets the onboard date to the current date.
+     * Create a new project.
+     * Expects a payload with a clientId and deadline (among other required fields).
+     * Automatically sets the onboard date to the current date if not provided.
      *
-     * @param project Project details
+     * @param projectDTO Project details
      * @return Created project
      */
-    @PostMapping("/")
-    public ResponseEntity<Project> createProject(@RequestBody Project project) {
-        LOGGER.info("🆕 Creating new project: {}", project.getName());
+    @PostMapping("/add")
+    public ResponseEntity<Project> createProject(@RequestBody ProjectDTO projectDTO) {
+        LOGGER.info("🆕 Creating new project: {}", projectDTO.getName());
 
-        // Ensure onboardDate is set to the current date if not provided
-        if (project != null && project.getOnboardDate() == null) {
-            project.setOnboardDate(LocalDate.now());
+        // Validate required fields: name, productOwner, expectedDeliveryDate, deadline, clientId
+        if (projectDTO.getName() == null || projectDTO.getName().isEmpty() ||
+                projectDTO.getProductOwner() == null || projectDTO.getProductOwner().isEmpty() ||
+                projectDTO.getExpectedDeliveryDate() == null ||
+                projectDTO.getDeadline() == null ||
+                projectDTO.getClientId() == null) {
+            LOGGER.error("Missing required fields in project payload");
+            return ResponseEntity.badRequest().build();
         }
+
+        // Create a new Project entity from the DTO
+        Project project = new Project();
+        project.setName(projectDTO.getName());
+        project.setProductOwner(projectDTO.getProductOwner());
+        project.setExpectedDeliveryDate(projectDTO.getExpectedDeliveryDate());
+        project.setDeadline(projectDTO.getDeadline());
+        project.setBudget(projectDTO.getBudget());
+        project.setAmountSpent(projectDTO.getAmountSpent());
+        project.setStatus(projectDTO.getStatus());
+        project.setLastUpdateComments(projectDTO.getLastUpdateComments());
+        // Set onboardDate to current date if not provided
+        project.setOnboardDate(projectDTO.getOnboardDate() != null ? projectDTO.getOnboardDate() : LocalDate.now());
+
+        // Fetch the client entity using the provided clientId
+        Client client = clientService.getClientById(projectDTO.getClientId());
+        if (client == null) {
+            LOGGER.error("Client not found for clientId: {}", projectDTO.getClientId());
+            return ResponseEntity.badRequest().build();
+        }
+        project.setClient(client);
 
         Project createdProject = projectService.addProject(project);
         return ResponseEntity.status(201).body(createdProject);

@@ -9,4 +9,7 @@ import java.util.List;
 @Repository
 public interface PaymentRepository extends JpaRepository<payment, Long> {
     List<payment> findByClientId(Long clientId);
+
+    // NEW: Fetch payments for a specific client and project.
+    List<payment> findByClientIdAndProjectId(Long clientId, Long projectId);
 }

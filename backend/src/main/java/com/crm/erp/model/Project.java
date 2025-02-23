@@ -1,7 +1,7 @@
 package com.crm.erp.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,13 +21,14 @@ public class Project {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "project_id")  // Renames the PK column in the DB
+    private Long projectId;       // Renamed field to "projectId"
 
     @Column(nullable = false, length = 255)
     private String name;
 
     @Column(nullable = false, length = 50)
-    private String status = "New Onboarding"; // ✅ Default status
+    private String status = "New Onboarding"; // Default status
 
     @Column(nullable = false)
     private Double amountSpent = 0.0;
@@ -49,13 +50,13 @@ public class Project {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate deadline;
 
-    @Column(nullable = false, updatable = false) // ✅ Cannot be updated after creation
+    @Column(nullable = false, updatable = false)
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate onboardDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", nullable = false)
-    @JsonIgnoreProperties("projects") // ✅ Helps fix serialization issues
+    @JsonIgnoreProperties("projects")
     private Client client;
 
     /**

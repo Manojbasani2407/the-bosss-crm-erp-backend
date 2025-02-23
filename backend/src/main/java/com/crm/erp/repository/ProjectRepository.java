@@ -23,21 +23,20 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
      * @return List of projects with client details
      */
     @EntityGraph(attributePaths = {"client"})
-    List<Project> findAll();  // ✅ Ensures client data is eagerly fetched
+    List<Project> findAll();
 
     /**
-     * Retrieves a project by ID, ensuring associated client details are also fetched.
+     * Retrieves a project by projectId, ensuring associated client details are also fetched.
      * Uses a JPQL `JOIN FETCH` query for better performance.
      *
      * @param id Project ID
      * @return Optional containing the project and its associated client
      */
-    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.client WHERE p.id = :id")
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.client WHERE p.projectId = :id")
     Optional<Project> findByIdWithClient(@Param("id") Long id);
 
     /**
      * Retrieves projects by status with client details eagerly loaded.
-     * Helps in filtering specific project states like `In Progress`, `Completed`, etc.
      *
      * @param status Project status
      * @return List of projects with the given status

@@ -9,8 +9,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,9 +24,12 @@ public class payment {
 
     private Long invoiceId;
     private Long clientId;
+
+    // NEW field: projectId to associate this payment with a specific project
+    private Long projectId;
+
     private Long amount;
     private String currency;
     private String status;
-
     private LocalDateTime paymentDate;
 }

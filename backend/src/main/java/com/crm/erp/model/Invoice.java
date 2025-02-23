@@ -35,4 +35,8 @@ public class Invoice {
     @ManyToOne
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
+
+    @ManyToOne
+    @JoinColumn(name = "project_id")
+    private Project project;  // ✅ Added project reference
 }

@@ -31,6 +31,12 @@ public class InvoiceController {
         return ResponseEntity.ok(invoiceService.getInvoiceById(id));
     }
 
+    // NEW: Endpoint to get invoices by project id.
+    @GetMapping("/project/{projectId}")
+    public ResponseEntity<List<InvoiceDTO>> getInvoicesByProject(@PathVariable Long projectId) {
+        return ResponseEntity.ok(invoiceService.getInvoicesByProject(projectId));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<InvoiceDTO> updateInvoice(@PathVariable Long id, @RequestBody InvoiceDTO invoiceDTO) {
         InvoiceDTO updatedInvoice = invoiceService.updateInvoice(id, invoiceDTO);

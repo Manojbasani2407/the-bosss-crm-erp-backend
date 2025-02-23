@@ -54,32 +54,32 @@ public class ProjectService {
     }
 
     /**
-     * Retrieves a project by ID along with client details.
+     * Retrieves a project by its projectId along with client details.
      *
-     * @param id Project ID
+     * @param projectId Project ID
      * @return Project with client details
      * @throws ResourceNotFoundException if project is not found
      */
-    public Project getProjectById(Long id) {
-        LOGGER.info("Fetching project with ID: {}", id);
-        return projectRepository.findByIdWithClient(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + id));
+    public Project getProjectById(Long projectId) {
+        LOGGER.info("Fetching project with projectId: {}", projectId);
+        return projectRepository.findByIdWithClient(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with projectId: " + projectId));
     }
 
     /**
      * Updates an existing project with new details.
      *
-     * @param id             Project ID
+     * @param projectId      Project ID
      * @param projectDetails Updated project details
      * @return Updated project
      * @throws ResourceNotFoundException if project is not found
      */
     @Transactional
-    public Project updateProject(Long id, Project projectDetails) {
-        LOGGER.info("Updating project with ID: {}", id);
+    public Project updateProject(Long projectId, Project projectDetails) {
+        LOGGER.info("Updating project with projectId: {}", projectId);
 
-        Project existingProject = projectRepository.findByIdWithClient(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + id));
+        Project existingProject = projectRepository.findByIdWithClient(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with projectId: " + projectId));
 
         existingProject.setName(projectDetails.getName());
         existingProject.setDeadline(projectDetails.getDeadline());
@@ -94,24 +94,24 @@ public class ProjectService {
             existingProject.setClient(projectDetails.getClient());
         }
 
-        LOGGER.info("Project with ID {} successfully updated", id);
+        LOGGER.info("Project with projectId {} successfully updated", projectId);
         return projectRepository.save(existingProject);
     }
 
     /**
      * Moves a project to the Deleted Projects table instead of permanently deleting it.
      *
-     * @param id Project ID
+     * @param projectId Project ID
      * @throws ResourceNotFoundException if project is not found
      */
     @Transactional
-    public void deleteProject(Long id) {
-        LOGGER.info("Attempting to delete project with ID: {}", id);
+    public void deleteProject(Long projectId) {
+        LOGGER.info("Attempting to delete project with projectId: {}", projectId);
 
-        Project project = projectRepository.findByIdWithClient(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + id));
+        Project project = projectRepository.findByIdWithClient(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with projectId: " + projectId));
 
-        // Move project details to DeletedProject
+        // Move project details to DeletedProject, including all relevant fields.
         DeletedProject deletedProject = new DeletedProject();
         deletedProject.setName(project.getName());
         deletedProject.setDeadline(project.getDeadline());
@@ -122,26 +122,28 @@ public class ProjectService {
         deletedProject.setAmountSpent(project.getAmountSpent());
         deletedProject.setLastUpdateComments(project.getLastUpdateComments());
         deletedProject.setClient(project.getClient());
+        // Optionally, if you want to store the projectId in the deleted project record,
+        // you could add a similar field to DeletedProject.
 
         deletedProjectRepository.save(deletedProject);
-        projectRepository.deleteById(id);
+        projectRepository.deleteById(projectId);
 
-        LOGGER.info("Project with ID {} moved to deleted projects successfully", id);
+        LOGGER.info("Project with projectId {} moved to deleted projects successfully", projectId);
     }
 
     /**
      * Restores a project from the Deleted Projects table back to active projects.
      *
-     * @param id Deleted Project ID
+     * @param projectId Deleted Project ID
      * @return Restored Project
      * @throws ResourceNotFoundException if deleted project is not found
      */
     @Transactional
-    public Project restoreDeletedProject(Long id) {
-        LOGGER.info("Attempting to restore deleted project with ID: {}", id);
+    public Project restoreDeletedProject(Long projectId) {
+        LOGGER.info("Attempting to restore deleted project with projectId: {}", projectId);
 
-        DeletedProject deletedProject = deletedProjectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Deleted Project not found with ID: " + id));
+        DeletedProject deletedProject = deletedProjectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Deleted Project not found with projectId: " + projectId));
 
         Project restoredProject = new Project();
         restoredProject.setName(deletedProject.getName());
@@ -154,8 +156,8 @@ public class ProjectService {
         restoredProject.setLastUpdateComments(deletedProject.getLastUpdateComments());
         restoredProject.setClient(deletedProject.getClient());
 
-        deletedProjectRepository.deleteById(id);
-        LOGGER.info("Deleted project with ID {} restored successfully", id);
+        deletedProjectRepository.deleteById(projectId);
+        LOGGER.info("Deleted project with projectId {} restored successfully", projectId);
         return projectRepository.save(restoredProject);
     }
 }

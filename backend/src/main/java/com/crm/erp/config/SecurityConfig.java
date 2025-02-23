@@ -35,7 +35,8 @@ public class SecurityConfig {
             "/api/public/**",
             "/api/projects/**",
             "/api/clients/**",
-            "/api/invoices/**"
+            "/api/invoices/**",
+            "/api/payments/**"
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -75,6 +76,7 @@ public class SecurityConfig {
                         "/api/projects/delete/{id}",
                         "/api/clients/**",
                         "/api/invoices/**",
+                        "/api/payments/**",
                         "/api/projects/restore/{id}").permitAll() // Allow project actions
                 .anyRequest().authenticated(); // Secure all other endpoints
     }
